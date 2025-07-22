@@ -3,6 +3,8 @@ Mudah Belajar SQL - Live SQL Query Runner
 
 Ini adalah aplikasi web interaktif yang dirancang untuk membantu pengguna belajar dan berlatih SQL langsung di browser. Aplikasi ini menyediakan lingkungan yang aman untuk menjalankan kueri SQL pada dataset sampel tanpa memerlukan pengaturan database yang rumit. Fokus utamanya adalah pada kasus penggunaan praktis seperti pembersihan data (_data cleaning_) dan manipulasi data.
 
+Akses ke aplikasi ini kunjungi [https://belajarsql.isparmo.com/](https://belajarsql.isparmo.com/)
+
 Deskripsi
 ---------
 
@@ -41,7 +43,7 @@ Fitur-fitur Utama
 Cara Menggunakan
 ----------------
 
-1.  **Buka Aplikasi:** Cukup buka file index.html di browser web modern apa pun.
+1.  **Buka Aplikasi:** [https://belajarsql.isparmo.com/](https://belajarsql.isparmo.com/)
     
 2.  **Pilih atau Tulis Kueri:**
     
