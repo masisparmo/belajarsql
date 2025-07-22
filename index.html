@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live SQL Query Runner (Standalone)</title>
+    <!-- Memuat pustaka sql.js dari CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        .container {
+            display: flex;
+            flex-direction: row; /* Mengubah tata letak menjadi berdampingan (kiri-kanan) */
+            flex-grow: 1;
+            gap: 20px;
+            min-height: 0; /* Mencegah container meluap di flexbox */
+        }
+        .query-box {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 40%;      /* Memberi porsi fleksibel pada area kueri */
+            max-width: 500px;   /* Lebar maksimum untuk area kueri */
+            min-width: 350px;   /* Lebar minimum untuk area kueri */
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            align-self: flex-start;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .help-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            background-color: #6c757d;
+            margin-top: 0;
+        }
+        .help-btn:hover {
+            background-color: #5a6268;
+        }
+        .action-buttons {
+            margin-top: 10px;
+        }
+        .csv-btn {
+            background-color: #28a745;
+            margin-left: 10px;
+        }
+        .csv-btn:hover { background-color: #218838; }
+        .query-controls {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        .sample-data-container {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sample-data-container h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .sample-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        .sample-table th, .sample-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap; /* Mencegah teks wrap dan memaksa scrollbar horizontal jika perlu */
+        }
+        .sample-table th {
+            background-color: #f8f9fa;
+        }
+        .result-container {
+            flex-grow: 1;
+            overflow: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            padding: 10px;
+        }
+        #result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #result-table th, #result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap; /* Mencegah teks wrap dan memaksa scrollbar horizontal jika perlu */
+        }
+        #result-table th {
+            background-color: #f2f2f2;
+        }
+        #error-message {
+            color: #d9534f;
+            font-weight: bold;
+            white-space: pre-wrap; /* Agar pesan error panjang bisa wrap */
+        }
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #888;
+        }
+        .help-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .help-section:last-child {
+            border-bottom: none;
+        }
+        .help-section h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .data-cleaning-section {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .modal-content pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Live SQL Query Runner</h1>
+    <p>Jalankan kueri SQL secara langsung di browser Anda menggunakan data tabel di bawah ini.</p>
+
+    <div class="sample-data-container">
+        <h3>Contoh Data Tabel: <code>karyawan</code></h3>
+        <table class="sample-table">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>nama</th>
+                    <th>email</th>
+                    <th>kota</th>
+                    <th>gaji</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>'  Budi Santoso '</td><td>'budi.santoso@example.com'</td><td>'Jakarta'</td><td>5000000</td></tr>
+                <tr><td>2</td><td>'siti aminah'</td><td>'siti.aminah@example.com'</td><td>'jakarta'</td><td>6500000</td></tr>
+                <tr><td>3</td><td>'Andi Wijaya'</td><td><em>NULL</em></td><td>'  Bandung '</td><td>7000000</td></tr>
+                <tr><td>4</td><td>' DEWI LESTARI '</td><td>'dewi@example.com'</td><td>'Surabaya'</td><td>5500000</td></tr>
+                <tr><td>5</td><td>'Rahmat Hidayat'</td><td>'rahmat.h@example.com'</td><td>'yogyakarta'</td><td><em>NULL</em></td></tr>
+                <tr><td>6</td><td>'Joko Susilo'</td><td>'joko@example.com'</td><td>'JAKARTA'</td><td>8000000</td></tr>
+            </tbody>
+        </table>
+        <details style="margin-top: 10px; font-size: 12px;">
+            <summary>Karakteristik Data "Tidak Bersih"</summary>
+            <ul style="margin-top: 5px;">
+                <li><strong>Spasi Ekstra:</strong> Kolom <code>nama</code> dan <code>kota</code> memiliki spasi di awal/akhir.</li>
+                <li><strong>Kapitalisasi Tidak Konsisten:</strong> Kolom <code>nama</code> dan <code>kota</code> menggunakan campuran huruf besar dan kecil.</li>
+                <li><strong>Nilai NULL:</strong> Kolom <code>email</code> dan <code>gaji</code> memiliki data kosong (NULL).</li>
+            </ul>
+        </details>
+    </div>
+
+    <div class="container">
+        <div class="query-box">
+            <div class="query-controls">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label for="sample-queries" style="font-weight: bold;">Pilih Contoh Kueri:</label>
+                    <button id="help-button" class="help-btn">Bantuan SQL</button>
+                </div>
+                <select id="sample-queries" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px;"></select>
+            </div>
+            <textarea id="sql-query" placeholder="SELECT * FROM karyawan;"></textarea>
+            <div class="action-buttons">
+                <button id="run-button">Run Query</button>
+                <button id="export-csv-button" class="csv-btn" style="display: none;">Export to CSV</button>
+            </div>
+        </div>
+        <div class="result-container">
+            <div id="error-message"></div>
+            <table id="result-table">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal untuk Bantuan SQL -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2 style="margin-top:0;">Panduan Lengkap Sintaks dan Fungsi SQL</h2>
+            <p style="font-size: 14px; margin-bottom: 20px;">SQL (Structured Query Language) adalah bahasa standar untuk mengelola dan memanipulasi data. Berikut adalah panduan fungsi utamanya.</p>
+            
+            <div class="help-section data-cleaning-section">
+                <h3>Analisis dan Pembersihan Data (Data Cleaning)</h3>
+                <p>Fungsi-fungsi ini sangat berguna untuk data yang tidak bersih seperti pada tabel contoh <code>karyawan</code>.</p>
+                <p><strong>Menemukan Nilai Kosong (NULL)</strong></p>
+                <pre><code>-- Mencari karyawan yang gajinya belum diisi
+SELECT nama, gaji FROM karyawan WHERE gaji IS NULL;</code></pre>
+                <p><strong>Memeriksa Konsistensi Data</strong></p>
+                <pre><code>-- Melihat semua variasi nama kota yang ada
+SELECT DISTINCT kota FROM karyawan;</code></pre>
+                <p><strong>TRIM()</strong>: Menghapus spasi di awal dan akhir teks.</p>
+                <pre><code>-- Membersihkan spasi dari kolom nama
+SELECT nama, TRIM(nama) AS nama_bersih FROM karyawan;</code></pre>
+                <p><strong>LOWER() / UPPER()</strong>: Mengubah teks menjadi huruf kecil atau besar untuk standardisasi.</p>
+                <pre><code>-- Menyeragamkan data kota menjadi huruf kecil
+SELECT kota, LOWER(TRIM(kota)) AS kota_standar FROM karyawan;</code></pre>
+                <p><strong>COALESCE()</strong>: Mengganti nilai NULL dengan nilai default.</p>
+                <pre><code>-- Mengganti gaji yang kosong dengan 0
+SELECT nama, COALESCE(gaji, 0) AS gaji_final FROM karyawan;</code></pre>
+                <p><strong>CASE Statement</strong>: Menerapkan logika kondisional (if-then-else).</p>
+                <pre><code>-- Mengkategorikan gaji karyawan
+SELECT nama, gaji,
+CASE
+    WHEN gaji > 6000000 THEN 'Gaji Tinggi'
+    ELSE 'Gaji Standar'
+END AS level_gaji
+FROM karyawan;</code></pre>
+            </div>
+
+            <div class="help-section">
+                <h3>Data Manipulation Language (DML)</h3>
+                <p>Perintah untuk mengelola data di dalam tabel.</p>
+                <p><strong>SELECT</strong>: Mengambil data dari tabel.</p>
+                <pre><code>-- Mengambil nama dan kota dari karyawan di 'jakarta' (case-insensitive)
+SELECT nama, kota FROM karyawan WHERE LOWER(TRIM(kota)) = 'jakarta';</code></pre>
+                <p><strong>INSERT INTO</strong>: Menambahkan data baru.</p>
+                <pre><code>-- Menambahkan karyawan baru
+INSERT INTO karyawan (nama, email, kota, gaji)
+VALUES ('Slamet Riyadi', 'slamet@example.com', 'Solo', 6000000);</code></pre>
+                <p><strong>UPDATE</strong>: Memperbarui data yang sudah ada.</p>
+                <pre><code>-- Memperbarui gaji Andi Wijaya
+UPDATE karyawan SET gaji = 7500000 WHERE nama LIKE '%Andi%';</code></pre>
+                <p><strong>DELETE</strong>: Menghapus data.</p>
+                <pre><code>-- Menghapus data Joko Susilo
+DELETE FROM karyawan WHERE nama = 'Joko Susilo';</code></pre>
+            </div>
+    
+            <div class="help-section">
+                <h3>Fungsi Agregat dan Pengelompokan</h3>
+                <p>Fungsi yang melakukan perhitungan pada sekelompok baris.</p>
+                <p><strong>COUNT()</strong>: Menghitung jumlah baris.</p>
+                <pre><code>SELECT COUNT(*) FROM karyawan;</code></pre>
+                <p><strong>SUM()</strong>: Menjumlahkan nilai numerik.</p>
+                <pre><code>SELECT SUM(gaji) FROM karyawan;</code></pre>
+                <p><strong>AVG()</strong>: Menghitung nilai rata-rata.</p>
+                <pre><code>SELECT AVG(gaji) FROM karyawan;</code></pre>
+                <p><strong>MIN() / MAX()</strong>: Menemukan nilai terkecil atau terbesar.</p>
+                <pre><code>SELECT MIN(gaji), MAX(gaji) FROM karyawan;</code></pre>
+                <p><strong>GROUP BY</strong>: Mengelompokkan baris berdasarkan nilai kolom, biasanya digunakan dengan fungsi agregat.</p>
+                <pre><code>-- Menghitung jumlah karyawan per kota (setelah dibersihkan)
+SELECT LOWER(TRIM(kota)) AS kota, COUNT(id)
+FROM karyawan
+GROUP BY LOWER(TRIM(kota));</code></pre>
+            </div>
+    
+            <div class="help-section">
+                <h3>Klausa Umum Lainnya</h3>
+                <p><strong>ORDER BY</strong>: Mengurutkan hasil.</p>
+                <pre><code>-- Mengurutkan karyawan berdasarkan gaji dari tertinggi ke terendah
+SELECT * FROM karyawan ORDER BY gaji DESC;</code></pre>
+                <p><strong>LIMIT</strong>: Membatasi jumlah baris yang ditampilkan.</p>
+                <pre><code>-- Menampilkan 3 karyawan dengan gaji tertinggi
+SELECT * FROM karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
+            </div>
+
+            <div class="help-section">
+                <h3>Data Definition Language (DDL)</h3>
+                <p>Perintah untuk mendefinisikan struktur database. <em>(Catatan: Perintah ini tidak akan mengubah tabel <code>karyawan</code> di aplikasi ini, hanya sebagai contoh sintaks.)</em></p>
+                <p><strong>CREATE TABLE</strong>: Membuat tabel baru.</p>
+                <pre><code>CREATE TABLE Departemen (
+    id_dept INT,
+    nama_dept VARCHAR(100)
+);</code></pre>
+                <p><strong>ALTER TABLE</strong>: Mengubah struktur tabel.</p>
+                <pre><code>ALTER TABLE Departemen ADD COLUMN lokasi VARCHAR(50);</code></pre>
+                <p><strong>DROP TABLE</strong>: Menghapus tabel.</p>
+                <pre><code>DROP TABLE Departemen;</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Definisikan variabel global untuk database
+        let db;
+        let lastSuccessfulResult = null;
+
+        // Fungsi untuk menjalankan kueri dan menampilkan hasilnya
+        function runQuery() {
+            const query = document.getElementById('sql-query').value;
+            const table = document.getElementById('result-table');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            const errorDiv = document.getElementById('error-message');
+            const exportBtn = document.getElementById('export-csv-button');
+
+            // Bersihkan hasil sebelumnya
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            errorDiv.textContent = '';
+            exportBtn.style.display = 'none';
+            lastSuccessfulResult = null;
+
+            try {
+                // Jalankan kueri menggunakan sql.js
+                const results = db.exec(query);
+
+                if (results.length === 0) {
+                    tbody.innerHTML = '<tr><td>Query executed successfully, no results to display.</td></tr>';
+                    return;
+                }
+
+                // Kita hanya akan menampilkan hasil dari statement pertama
+                const { columns, values } = results[0];
+
+                // Buat header tabel
+                const headerRow = document.createElement('tr');
+                columns.forEach(colName => {
+                    const th = document.createElement('th');
+                    th.textContent = colName;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+
+                if (values.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="' + columns.length + '">No results found.</td></tr>';
+                    return;
+                }
+
+                // Isi baris data
+                values.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    rowData.forEach(cellData => {
+                        const td = document.createElement('td');
+                        td.textContent = cellData;
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                });
+
+                // Simpan hasil dan tampilkan tombol ekspor
+                lastSuccessfulResult = { columns, values };
+                exportBtn.style.display = 'inline-block';
+
+            } catch (e) {
+                // Tampilkan pesan error jika kueri gagal
+                errorDiv.textContent = `SQL Error: ${e.message}`;
+            }
+        }
+
+        // Fungsi untuk mengekspor data ke CSV
+        function exportToCSV() {
+            if (!lastSuccessfulResult || lastSuccessfulResult.values.length === 0) {
+                alert("Tidak ada data untuk diekspor.");
+                return;
+            }
+
+            const { columns, values } = lastSuccessfulResult;
+
+            const header = columns.join(',');
+            const rows = values.map(rowArray => {
+                return rowArray.map(cell => {
+                    const cellStr = String(cell === null ? '' : cell);
+                    // Menangani kasus jika data mengandung koma atau tanda kutip
+                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                        return `"${cellStr.replace(/"/g, '""')}"`;
+                    }
+                    return cellStr;
+                }).join(',');
+            });
+
+            const csvContent = [header, ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "hasil_kueri.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Fungsi utama untuk inisialisasi database
+        async function main() {
+            // Inisialisasi sql.js dengan file wasm-nya
+            const SQL = await initSqlJs({
+                locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+            });
+
+            // Buat database baru di memori browser
+            db = new SQL.Database();
+
+            // Buat tabel (sama seperti di Python)
+            db.run(`
+                CREATE TABLE karyawan (
+                    id INTEGER PRIMARY KEY,
+                    nama TEXT NOT NULL,
+                    email TEXT,
+                    kota TEXT,
+                    gaji INTEGER
+                );
+            `);
+
+            // Masukkan data "kotor" (sama seperti di Python)
+            const unclean_data = [
+                ['  Budi Santoso ', 'budi.santoso@example.com', 'Jakarta', 5000000],
+                ['siti aminah', 'siti.aminah@example.com', 'jakarta', 6500000],
+                ['Andi Wijaya', null, '  Bandung ', 7000000],
+                [' DEWI LESTARI ', 'dewi@example.com', 'Surabaya', 5500000],
+                ['Rahmat Hidayat', 'rahmat.h@example.com', 'yogyakarta', null],
+                ['Joko Susilo', 'joko@example.com', 'JAKARTA', 8000000],
+            ];
+
+            const stmt = db.prepare("INSERT INTO karyawan (nama, email, kota, gaji) VALUES (?, ?, ?, ?)");
+            unclean_data.forEach(row => {
+                stmt.run(row);
+            });
+            stmt.free();
+
+            // --- Logika untuk Contoh Kueri dari Dropdown ---
+            const sampleQueries = [
+                { name: "1. Tampilkan Semua Data (Kotor)", query: "SELECT * FROM karyawan;" },
+                { 
+                    name: "2. Bersihkan Nama dan Kota (TRIM & LOWER)", 
+                    query: "SELECT\n    TRIM(nama) AS nama_bersih,\n    LOWER(TRIM(kota)) AS kota_bersih,\n    email,\n    gaji\nFROM\n    karyawan;" 
+                },
+                { 
+                    name: "3. Tangani Gaji NULL (COALESCE)", 
+                    query: "SELECT\n    nama,\n    email,\n    kota,\n    COALESCE(gaji, 0) AS gaji_final\nFROM\n    karyawan;" 
+                },
+                { 
+                    name: "4. Kelompokkan Berdasarkan Kota (GROUP BY)", 
+                    query: "SELECT\n    LOWER(TRIM(kota)) AS kota,\n    COUNT(id) AS jumlah_karyawan,\n    AVG(COALESCE(gaji, 0)) AS rata_rata_gaji\nFROM\n    karyawan\nGROUP BY\n    LOWER(TRIM(kota));" 
+                },
+                { 
+                    name: "5. Filter Karyawan dari Jakarta (WHERE)", 
+                    query: "SELECT *\nFROM karyawan\nWHERE LOWER(TRIM(kota)) = 'jakarta';" 
+                }
+            ];
+
+            const queryTextarea = document.getElementById('sql-query');
+            const sampleQueriesSelect = document.getElementById('sample-queries');
+
+            // Isi dropdown dengan contoh kueri
+            sampleQueries.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.query;
+                option.textContent = item.name;
+                sampleQueriesSelect.appendChild(option);
+            });
+
+            // Tambahkan event listener ke dropdown untuk mengubah textarea dan menjalankan kueri
+            sampleQueriesSelect.addEventListener('change', (event) => {
+                queryTextarea.value = event.target.value;
+                runQuery();
+            });
+
+            // Set kueri awal dan jalankan
+            queryTextarea.value = sampleQueries[0].query;
+            runQuery();
+
+            // Tambahkan event listener ke tombol
+            document.getElementById('run-button').addEventListener('click', runQuery);
+            document.getElementById('export-csv-button').addEventListener('click', exportToCSV);
+
+            // --- Logika untuk Modal Bantuan ---
+            const helpButton = document.getElementById('help-button');
+            const helpModal = document.getElementById('help-modal');
+            const closeButton = helpModal.querySelector('.close-button');
+
+            helpButton.addEventListener('click', () => {
+                helpModal.style.display = 'flex';
+            });
+
+            closeButton.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+
+            // Tutup modal jika klik di luar area konten
+            helpModal.addEventListener('click', (event) => {
+                if (event.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+        }
+
+        // Jalankan fungsi utama saat halaman selesai dimuat
+        main().catch(e => console.error(e));
+
+    </script>
+
+</body>
+</html>
