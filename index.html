@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUDAH BELAJAR SQL DATA ANALITIK</title>
+    <title>MUDAH BELAJAR SQL UNTUK DATA ANALITIK</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -332,8 +332,18 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
 
         function populateSampleQueries(tableName) {
             const queries = [
-                { name: `Tampilkan Semua Data dari ${tableName}`, query: `SELECT * FROM ${tableName} LIMIT 20;` },
-                { name: `Hitung Jumlah Baris di ${tableName}`, query: `SELECT COUNT(*) AS total_baris FROM ${tableName};` }
+                { name: `1. Tampilkan Semua Data`, query: `SELECT * FROM ${tableName} LIMIT 20;` },
+                { name: `2. Hitung Jumlah Baris`, query: `SELECT COUNT(*) AS total_baris FROM ${tableName};` },
+                { name: `3. Tampilkan Gaji > 6 Juta`, query: `SELECT * FROM ${tableName} WHERE gaji > 6000000;` },
+                { name: `4. Cari Nama 'siti' (Case-Insensitive)`, query: `SELECT * FROM ${tableName} WHERE LOWER(nama) LIKE '%siti%';` },
+                { name: `5. Tampilkan Data Email Kosong`, query: `SELECT * FROM ${tableName} WHERE email IS NULL OR email = '';` },
+                { name: `6. Urutkan Karyawan by Nama (A-Z)`, query: `SELECT * FROM ${tableName} ORDER BY nama ASC;` },
+                { name: `7. Rata-rata Gaji per Kota`, query: `SELECT LOWER(TRIM(kota)) as kota, CAST(AVG(gaji) AS INTEGER) as rata_rata_gaji FROM ${tableName} GROUP BY LOWER(TRIM(kota));` },
+                { name: `8. Tampilkan 3 Gaji Tertinggi`, query: `SELECT * FROM ${tableName} ORDER BY gaji DESC LIMIT 3;`},
+                { name: `9. Lihat Variasi Penulisan Kota`, query: `SELECT DISTINCT kota FROM ${tableName};`},
+                { name: `10. Ganti Gaji Kosong dengan 0`, query: `SELECT nama, email, kota, COALESCE(gaji, 0) AS gaji_diperbaiki FROM ${tableName};`},
+                { name: `11. Kategorikan Level Gaji (CASE)`, query: `SELECT nama, gaji,\nCASE\n    WHEN gaji > 7000000 THEN 'Tinggi'\n    WHEN gaji > 5000000 THEN 'Menengah'\n    ELSE 'Standar'\nEND AS level_gaji\nFROM ${tableName};`},
+                { name: `12. Hitung Panjang Nama Karyawan`, query: `SELECT nama, LENGTH(nama) AS panjang_nama FROM ${tableName};`}
             ];
             ui.sampleQueriesSelect.innerHTML = '';
             queries.forEach(item => {
