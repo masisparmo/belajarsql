@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mudah Belajar SQL dan Analisa Data. Oleh: ISPARMO</title>
+    <title>Alat Analisis CSV & SQL Runner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -58,6 +58,7 @@
         #analysis-report h4 { margin-top: 15px; margin-bottom: 5px; color: #0056b3; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
         #analysis-report code { background-color: #e9ecef; padding: 2px 4px; border-radius: 3px; }
         #analysis-report .data-table-wrapper { max-height: 150px; overflow: auto; }
+        #analysis-report pre { background-color: #f1f1f1; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 12px; margin-top: 5px; }
         .preview-table { width: 100%; border-collapse: collapse; }
         .preview-table th, .preview-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; font-size: 13px; white-space: nowrap; }
         .preview-table th { background-color: var(--light-bg); position: sticky; top: 0; }
@@ -80,8 +81,8 @@
         #ai-response, #quiz-container { margin-top: 15px; background-color: #fdfdfd; border: 1px solid var(--border-color); padding: 15px; border-radius: 5px; min-height: 50px; white-space: pre-wrap; }
         .generate-quiz-btn { background-color: var(--info-color); }
         .quiz-question { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
-        .quiz-question p { margin-top: 0; margin-bottom: 10px; font-weight: bold; }
-        .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+        .quiz-question p { margin-top: 0; margin-bottom: 8px; font-weight: bold; }
+        .quiz-options { display: flex; flex-direction: column; gap: 5px; }
         .quiz-options label { display: block; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; }
         .quiz-options label:hover { background-color: #f0f8ff; }
         .quiz-options input { margin-right: 10px; }
@@ -90,12 +91,13 @@
         .quiz-feedback.incorrect { background-color: #f8d7da; color: #721c24; }
         #quiz-navigation { margin-top: 15px; text-align: right; }
         #quiz-results { padding: 15px; }
+        #quiz-results p strong { font-size: 1.5em; color: var(--primary-color); }
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <h1>MUDAH BELAJAR SQL DAN ANALISA DATA</h1>
+        <h1>Analisis Data & SQL Runner</h1>
         <div class="content-wrapper">
             <div class="left-panel">
                 <div class="box" id="sample-data-box">
@@ -219,6 +221,7 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
                 <h3>Kuis SQL Interaktif</h3>
                 <p>Uji pengetahuan SQL Anda dengan kuis yang dibuat oleh AI berdasarkan tabel saat ini.</p>
                 <div class="action-buttons">
+                    <button class="generate-quiz-btn" data-count="5">Buat 5 Soal Kuis</button>
                     <button class="generate-quiz-btn" data-count="10">Buat 10 Soal Kuis</button>
                     <button class="generate-quiz-btn" data-count="15">Buat 15 Soal Kuis</button>
                     <button class="generate-quiz-btn" data-count="20">Buat 20 Soal Kuis</button>
@@ -331,8 +334,12 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
                 ui.aiExpertModal.style.display = 'flex';
             });
             const closeAiModal = () => {
-                if (window.confirm("Apakah Anda yakin ingin keluar? Semua progres kuis atau chat akan hilang.")) {
-                    ui.aiExpertModal.style.display = 'none';
+                if (currentQuiz.length > 0 && currentQuestionIndex < currentQuiz.length) {
+                    if (window.confirm("Apakah Anda yakin ingin keluar? Semua progres kuis akan hilang.")) {
+                        ui.aiExpertModal.style.display = 'none';
+                    }
+                } else {
+                     ui.aiExpertModal.style.display = 'none';
                 }
             };
             ui.aiExpertModal.querySelector('.close-button').addEventListener('click', closeAiModal);
@@ -534,6 +541,7 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
                     if (res.length > 0 && res[0].values.length > 0) {
                         issuesFound++;
                         let reportHTML = `<h4>${issuesFound}. ${title}</h4><p>${description}</p>`;
+                        reportHTML += `<pre><code>${query}</code></pre>`;
                         reportHTML += renderResultAsTable(res[0]);
                         ui.analysisReportDiv.innerHTML += reportHTML;
                     }
@@ -763,7 +771,7 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
         }
 
         async function generateQuiz(count) {
-            const prompt = `Buat kuis SQL interaktif sebanyak ${count} soal. Soal harus relevan dengan tabel bernama '${currentTableName}' yang memiliki kolom: ${tableHeaders.join(', ')}. Berikan 4 pilihan jawaban untuk setiap soal.`;
+            const prompt = `Buat kuis SQL interaktif yang unik dan berbeda setiap kali diminta, sebanyak ${count} soal. Soal harus relevan dengan tabel bernama '${currentTableName}' yang memiliki kolom: ${tableHeaders.join(', ')}. Berikan 4 pilihan jawaban untuk setiap soal.`;
             
             ui.quizContainer.innerHTML = 'Membuat kuis...';
             document.querySelectorAll('.generate-quiz-btn').forEach(b => b.disabled = true);
@@ -854,8 +862,10 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
         function displayQuizResults() {
             const score = userAnswers.filter(a => a.isCorrect).length;
             let resultsHtml = `
-                <h3>Hasil Kuis</h3>
-                <p><strong>Skor Anda: ${score} dari ${currentQuiz.length}</strong></p>
+                <div id="quiz-results">
+                    <h3>Hasil Kuis</h3>
+                    <p><strong>Skor Anda: ${score} dari ${currentQuiz.length}</strong></p>
+                </div>
             `;
             userAnswers.forEach((answer, index) => {
                 resultsHtml += `
