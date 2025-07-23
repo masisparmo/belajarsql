@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUDAH BELAJAR SQL DAN DATA ANALITIK</title>
+    <title>MUDAH BELAJAR SQL & DATA ANALITIK</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -78,14 +78,22 @@
         <h1>Analisis Data & SQL Runner</h1>
         <div class="content-wrapper">
             <div class="left-panel">
-                <div class="box upload-section">
-                    <label for="csv-upload">1. Pilih Sumber Data</label>
-                    <input type="file" id="csv-upload" accept=".csv, .txt">
-                    <label for="csv-upload" class="upload-button">Unggah File CSV</label>
-                    <div id="data-source-box" style="margin-top: 15px;">
-                        <p>Atau gunakan data yang tersedia:</p>
+                <div class="box" id="sample-data-box">
+                    <h3>1. Mulai dengan Contoh Data</h3>
+                    <div class="preview-table-wrapper">
+                        <table id="sample-data-preview-table" class="preview-table"></table>
+                    </div>
+                     <div id="data-source-box" style="margin-top: 15px;">
+                        <p>Sumber data yang tersedia:</p>
                         <div id="data-source-buttons" class="action-buttons"></div>
                     </div>
+                </div>
+
+                <div class="box upload-section">
+                    <label for="csv-upload">2. Atau Unggah File Sendiri</label>
+                    <input type="file" id="csv-upload" accept=".csv, .txt">
+                    <label for="csv-upload" class="upload-button">Unggah File CSV</label>
+                    <p id="upload-status"></p>
                 </div>
 
                 <div class="box" id="public-dataset-box">
@@ -102,7 +110,7 @@
                 </div>
 
                 <div class="box" id="data-quality-box">
-                    <h3>2. Alat Kualitas Data</h3>
+                    <h3>3. Alat Kualitas Data</h3>
                     <p>Jalankan alat pada tabel aktif: <code id="active-table-name"></code></p>
                     <div class="action-buttons">
                         <button id="analyze-data-btn">Analisis Data</button>
@@ -115,7 +123,7 @@
 
             <div class="right-panel">
                 <div class="box">
-                    <h3>3. Editor Kueri SQL</h3>
+                    <h3>4. Editor Kueri SQL</h3>
                     <label for="sample-queries" style="font-weight: bold;">Pilih Contoh Kueri:</label>
                     <select id="sample-queries" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px;"></select>
                     <textarea id="sql-query" placeholder="Tulis kueri SQL di sini..."></textarea>
@@ -147,33 +155,33 @@
             
             <div class="data-cleaning-section">
                 <h3>Analisis dan Pembersihan Data</h3>
-                <p>Ini adalah fungsi dan sintaks yang paling penting untuk memperbaiki data yang tidak konsisten seperti pada tabel <code>karyawan_kotor</code>.</p>
+                <p>Ini adalah fungsi dan sintaks yang paling penting untuk memperbaiki data yang tidak konsisten seperti pada tabel <code>data_karyawan</code>.</p>
                 
                 <h4>Mencari Tahu Masalah Data</h4>
                 <p><strong>DISTINCT</strong>: Menampilkan nilai unik dari sebuah kolom. Sangat berguna untuk melihat variasi data yang ada.</p>
                 <pre><code>-- Melihat semua variasi penulisan 'kota'
-SELECT DISTINCT kota FROM karyawan_kotor;</code></pre>
+SELECT DISTINCT kota FROM data_karyawan;</code></pre>
                 
                 <p><strong>IS NULL</strong>: Memfilter baris di mana sebuah kolom tidak memiliki nilai (kosong).</p>
                 <pre><code>-- Menemukan karyawan yang gajinya belum diisi
-SELECT * FROM karyawan_kotor WHERE gaji IS NULL OR gaji = '';</code></pre>
+SELECT * FROM data_karyawan WHERE gaji IS NULL OR gaji = '';</code></pre>
 
                 <p><strong>LIKE</strong>: Mencari data berdasarkan pola teks. Karakter <code>%</code> mewakili nol atau lebih karakter apa pun.</p>
                 <pre><code>-- Mencari nama yang mengandung spasi di awal atau akhir
-SELECT nama FROM karyawan_kotor WHERE nama LIKE ' %' OR nama LIKE '% ';</code></pre>
+SELECT nama FROM data_karyawan WHERE nama LIKE ' %' OR nama LIKE '% ';</code></pre>
 
                 <h4>Memperbaiki Masalah Data</h4>
                 <p><strong>TRIM()</strong>: Menghapus spasi di awal dan akhir teks.</p>
                 <pre><code>-- Membersihkan spasi dari kolom nama
-SELECT nama, TRIM(nama) AS nama_bersih FROM karyawan_kotor;</code></pre>
+SELECT nama, TRIM(nama) AS nama_bersih FROM data_karyawan;</code></pre>
                 
                 <p><strong>LOWER() / UPPER()</strong>: Mengubah teks menjadi huruf kecil atau besar untuk menyeragamkan format.</p>
                 <pre><code>-- Menyeragamkan data kota menjadi huruf kecil
-SELECT kota, LOWER(TRIM(kota)) AS kota_standar FROM karyawan_kotor;</code></pre>
+SELECT kota, LOWER(TRIM(kota)) AS kota_standar FROM data_karyawan;</code></pre>
                 
                 <p><strong>COALESCE()</strong>: Mengganti nilai NULL atau kosong dengan nilai default yang Anda tentukan.</p>
                 <pre><code>-- Mengganti gaji yang kosong dengan 0
-SELECT nama, COALESCE(gaji, 0) AS gaji_final FROM karyawan_kotor;</code></pre>
+SELECT nama, COALESCE(gaji, 0) AS gaji_final FROM data_karyawan;</code></pre>
                 
                 <p><strong>CASE Statement</strong>: Menerapkan logika kondisional (if-then-else) untuk membuat kolom baru atau mengkategorikan data.</p>
                 <pre><code>-- Mengkategorikan gaji karyawan
@@ -183,34 +191,34 @@ CASE
     WHEN gaji IS NULL THEN 'Data Hilang'
     ELSE 'Gaji Standar'
 END AS level_gaji
-FROM karyawan_kotor;</code></pre>
+FROM data_karyawan;</code></pre>
             </div>
 
             <h3>Agregasi dan Pengelompokan</h3>
             <p>Fungsi yang melakukan perhitungan pada sekelompok baris.</p>
             <p><strong>COUNT()</strong>: Menghitung jumlah baris.</p>
             <pre><code>-- Menghitung total karyawan
-SELECT COUNT(*) FROM karyawan_kotor;
+SELECT COUNT(*) FROM data_karyawan;
 -- Menghitung karyawan yang emailnya terisi
-SELECT COUNT(email) FROM karyawan_kotor;</code></pre>
+SELECT COUNT(email) FROM data_karyawan;</code></pre>
             <p><strong>SUM()</strong>: Menjumlahkan nilai numerik.</p>
             <pre><code>-- Menghitung total gaji yang dikeluarkan (mengabaikan NULL)
-SELECT SUM(gaji) FROM karyawan_kotor;</code></pre>
+SELECT SUM(gaji) FROM data_karyawan;</code></pre>
             <p><strong>AVG()</strong>: Menghitung nilai rata-rata.</p>
             <pre><code>-- Menghitung rata-rata gaji
-SELECT AVG(gaji) FROM karyawan_kotor;</code></pre>
+SELECT AVG(gaji) FROM data_karyawan;</code></pre>
             <p><strong>MIN() / MAX()</strong>: Menemukan nilai terkecil atau terbesar.</p>
             <pre><code>-- Melihat gaji terendah dan tertinggi
-SELECT MIN(gaji), MAX(gaji) FROM karyawan_kotor;</code></pre>
+SELECT MIN(gaji), MAX(gaji) FROM data_karyawan;</code></pre>
             <p><strong>GROUP BY</strong>: Mengelompokkan baris berdasarkan nilai kolom, biasanya digunakan dengan fungsi agregat.</p>
             <pre><code>-- Menghitung jumlah karyawan per kota (setelah dibersihkan)
 SELECT LOWER(TRIM(kota)) AS kota_bersih, COUNT(id)
-FROM karyawan_kotor
+FROM data_karyawan
 GROUP BY kota_bersih;</code></pre>
             <p><strong>HAVING</strong>: Memfilter hasil setelah data dikelompokkan oleh <code>GROUP BY</code>.</p>
             <pre><code>-- Menampilkan kota yang memiliki lebih dari 1 karyawan
 SELECT LOWER(TRIM(kota)) AS kota_bersih, COUNT(id) AS jumlah
-FROM karyawan_kotor
+FROM data_karyawan
 GROUP BY kota_bersih
 HAVING jumlah > 1;</code></pre>
 
@@ -218,14 +226,14 @@ HAVING jumlah > 1;</code></pre>
             <p><strong>SELECT, FROM, WHERE</strong>: Fondasi dari setiap kueri untuk mengambil data.</p>
             <pre><code>-- Mengambil nama dan email karyawan dari Jakarta (setelah dibersihkan)
 SELECT nama, email
-FROM karyawan_kotor
+FROM data_karyawan
 WHERE LOWER(TRIM(kota)) = 'jakarta';</code></pre>
             <p><strong>ORDER BY</strong>: Mengurutkan hasil. <code>ASC</code> untuk menaik (default), <code>DESC</code> untuk menurun.</p>
             <pre><code>-- Mengurutkan karyawan berdasarkan gaji dari tertinggi ke terendah
-SELECT * FROM karyawan_kotor ORDER BY gaji DESC;</code></pre>
+SELECT * FROM data_karyawan ORDER BY gaji DESC;</code></pre>
             <p><strong>LIMIT</strong>: Membatasi jumlah baris yang ditampilkan.</p>
             <pre><code>-- Menampilkan 3 karyawan dengan gaji tertinggi
-SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
+SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
         </div>
     </div>
 
@@ -251,11 +259,12 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             sampleQueriesSelect: document.getElementById('sample-queries'),
             activeTableNameSpan: document.getElementById('active-table-name'),
             dataSourceButtons: document.getElementById('data-source-buttons'),
-            uploadBox: document.querySelector('.upload-section')
+            uploadStatus: document.getElementById('upload-status'),
+            samplePreviewTable: document.getElementById('sample-data-preview-table')
         };
 
         const sampleData = {
-            tableName: 'karyawan_kotor',
+            tableName: 'data_karyawan',
             headers: ['id', 'nama', 'email', 'kota', 'gaji'],
             rows: [
                 [1, '  Budi Santoso ', 'budi.santoso@example.com', 'Jakarta', 5000000],
@@ -264,7 +273,20 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
                 [4, ' DEWI LESTARI ', 'dewi@example.com', 'Surabaya', 5500000],
                 [5, 'Rahmat Hidayat', 'rahmat.h@example.com', 'yogyakarta', null],
                 [6, 'Joko Susilo', 'joko@example.com', 'JAKARTA', 8000000],
-                [7, 'siti aminah', 'siti.aminah@example.com', 'jakarta', 6500000]
+                [7, 'siti aminah', 'siti.aminah@example.com', 'jakarta', 6500000],
+                [8, '  Ahmad Yani', 'ahmad.y@example.com', 'Bandung', 7200000],
+                [9, 'Maria Tilaar', 'maria.t@example.com', 'surabaya', 6800000],
+                [10, 'Eko Prasetyo', null, '  Yogyakarta  ', 5100000],
+                [11, 'Lina Marlina', 'lina.marlina@example.com', 'JAKARTA', 9500000],
+                [12, '  Bambang Pamungkas', 'bambang@example.com', 'Jakarta', 8500000],
+                [13, 'Cahya Gumilar', 'cahya.g@example.com', 'bandung', 6200000],
+                [14, 'Dian Permata', 'dian.p@example.com', 'surabaya', null],
+                [15, 'Fajar Nugraha', 'fajar.n@example.com', 'Yogyakarta', 5300000],
+                [16, 'Gita Gutawa', 'gita.g@example.com', 'jakarta', 12000000],
+                [17, 'Hendra Setiawan', null, '  jakarta', 11000000],
+                [18, 'Indah Purnama', 'indah.p@example.com', 'Bandung', 7800000],
+                [19, '  Joko Susilo', 'joko@example.com', 'JAKARTA', 8000000],
+                [20, 'Kartika Sari', 'kartika.s@example.com', 'Surabaya', 7100000]
             ]
         };
 
@@ -272,8 +294,9 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             try {
                 const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}` });
                 db = new SQL.Database();
+                populateSampleDataPreview();
                 setupEventListeners();
-                loadDataIntoDB(sampleData.tableName, sampleData.headers, sampleData.rows.map(r => r.map(c => String(c === null ? '' : c))));
+                loadDataIntoDB(sampleData.tableName, sampleData.headers, sampleData.rows, true); // Pass true for pre-parsed sample data
             } catch (e) {
                 showError("Tidak dapat memuat database.");
             }
@@ -297,12 +320,21 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
                 }
             });
         }
+
+        function populateSampleDataPreview() {
+            const table = ui.samplePreviewTable;
+            let html = '<thead><tr>';
+            sampleData.headers.forEach(h => html += `<th>${h}</th>`);
+            html += '</tr></thead><tbody>';
+            sampleData.rows.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => html += `<td>${cell === null ? 'NULL' : cell}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
         
-        /**
-         * A more robust CSV parser that handles quoted fields.
-         * @param {string} line - A single line from a CSV file.
-         * @returns {string[]} An array of fields.
-         */
         function parseCsvLine(line) {
             const result = [];
             let currentField = '';
@@ -311,7 +343,6 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
                 const char = line[i];
                 if (char === '"') {
                     if (inQuotes && line[i+1] === '"') {
-                        // Handle escaped quote
                         currentField += '"';
                         i++;
                     } else {
@@ -328,11 +359,11 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             return result;
         }
 
-        function loadDataIntoDB(tableName, headers, dataRows) {
+        function loadDataIntoDB(tableName, headers, dataRows, isPreParsed = false) {
             try {
-                ui.uploadBox.querySelector('p').innerHTML = `Memproses <strong>${tableName}</strong>...`;
+                ui.uploadStatus.innerHTML = `Memproses <strong>${tableName}</strong>...`;
                 db.run(`DROP TABLE IF EXISTS ${tableName};`);
-                db.run(`DROP TABLE IF EXISTS ${tableName}_bersih;`);
+                db.run(`DROP TABLE IF EXISTS ${tableName}_clean;`);
                 
                 const createTableSql = `CREATE TABLE ${tableName} (${headers.map(h => `"${h}" TEXT`).join(', ')});`;
                 db.run(createTableSql);
@@ -341,16 +372,16 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
                 cleanedTableName = null;
                 tableHeaders = headers;
                 
-                processRowsInChunks(tableName, headers, dataRows, 0);
+                processRowsInChunks(tableName, headers, dataRows, 0, isPreParsed);
 
             } catch(err) {
                 showError(`Gagal memuat data: ${err.message}`);
-                ui.uploadBox.querySelector('p').textContent = "Gagal memuat. Silakan coba lagi.";
+                ui.uploadStatus.textContent = "Gagal memuat. Silakan coba lagi.";
             }
         }
         
-        function processRowsInChunks(tableName, headers, rows, startIndex) {
-            const chunkSize = 100; // Process 100 rows per chunk
+        function processRowsInChunks(tableName, headers, rows, startIndex, isPreParsed) {
+            const chunkSize = 100;
             const totalRows = rows.length;
             let endIndex = startIndex + chunkSize;
             if (endIndex > totalRows) {
@@ -359,24 +390,21 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
 
             const stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${headers.map(() => '?').join(', ')})`);
             for (let i = startIndex; i < endIndex; i++) {
-                // Use the robust parser here
-                const parsedRow = parseCsvLine(rows[i]);
+                const parsedRow = isPreParsed ? rows[i].map(cell => String(cell === null ? '' : cell)) : parseCsvLine(rows[i]);
                 if (parsedRow.length === headers.length) {
                     stmt.run(parsedRow);
                 } else {
-                    console.warn(`Skipping malformed row ${i+1}: Expected ${headers.length} columns, but found ${parsedRow.length}. Row content: ${rows[i]}`);
+                    console.warn(`Skipping malformed row ${i+1}: Expected ${headers.length} columns, but found ${parsedRow.length}.`);
                 }
             }
             stmt.free();
             
-            ui.uploadBox.querySelector('p').innerHTML = `Memproses baris ${endIndex} dari ${totalRows}...`;
+            ui.uploadStatus.innerHTML = `Memproses baris ${endIndex} dari ${totalRows}...`;
 
             if (endIndex < totalRows) {
-                // Schedule the next chunk to keep the UI responsive
-                setTimeout(() => processRowsInChunks(tableName, headers, rows, endIndex), 0);
+                setTimeout(() => processRowsInChunks(tableName, headers, rows, endIndex, isPreParsed), 0);
             } else {
-                // Finished processing
-                ui.uploadBox.querySelector('p').textContent = "Atau gunakan data yang tersedia:";
+                ui.uploadStatus.textContent = "";
                 switchActiveTable(originalTableName);
                 updateDataSourceUI();
             }
@@ -441,11 +469,10 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             const reader = new FileReader();
             reader.onload = function(e) {
                 const csvText = e.target.result;
-                const rows = csvText.trim().split('\n').map(r => r.trim());
-                // Use the robust parser for the header as well
-                const headers = parseCsvLine(rows.shift()).map(h => h.trim().replace(/"/g, '').replace(/[^a-zA-Z0-9_]/g, '_'));
+                const lines = csvText.trim().split('\n').map(r => r.trim());
+                const headers = parseCsvLine(lines.shift()).map(h => h.trim().replace(/"/g, '').replace(/[^a-zA-Z0-9_]/g, '_'));
                 const tableName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_]/g, '_');
-                loadDataIntoDB(tableName, headers, rows); // Pass raw rows
+                loadDataIntoDB(tableName, headers, lines, false); // Pass false for raw CSV lines
             };
             reader.readAsText(file);
         }
@@ -486,7 +513,7 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
         async function cleanData() {
             if (!originalTableName) return;
             
-            cleanedTableName = originalTableName + '_bersih';
+            cleanedTableName = originalTableName + '_clean';
             ui.cleaningLogDiv.style.display = 'block';
             ui.cleaningLogDiv.innerHTML = '';
             const log = (message) => { ui.cleaningLogDiv.innerHTML += `> ${message}\n`; ui.cleaningLogDiv.scrollTop = ui.cleaningLogDiv.scrollHeight; };
