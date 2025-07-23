@@ -1,4 +1,4 @@
-Mudah Belajar SQL - Live SQL Query Runner
+Mudah Belajar SQL dan Analisis Data
 =========================================
 
 Ini adalah aplikasi web interaktif yang dirancang untuk membantu pengguna belajar dan berlatih SQL langsung di browser. Aplikasi ini menyediakan lingkungan yang aman untuk menjalankan kueri SQL pada dataset sampel tanpa memerlukan pengaturan database yang rumit. Fokus utamanya adalah pada kasus penggunaan praktis seperti pembersihan data (_data cleaning_) dan manipulasi data.
