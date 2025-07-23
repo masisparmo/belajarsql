@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mudah Belajar SQL dan Data Analitik - oleh ISPARMO</title>
+    <title>Alat Analisis CSV & SQL Runner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -71,12 +71,31 @@
         .modal-content pre { background-color: #f1f1f1; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; border-left: 4px solid var(--primary-color); }
         .modal-content code { font-family: 'Courier New', Courier, monospace; }
         .data-cleaning-section { background-color: #e7f3ff; padding: 15px; border-radius: 5px; border-left: 4px solid var(--primary-color); margin-bottom: 20px; }
+        #ai-expert-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: var(--primary-color); color: white; border-radius: 50%; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 999; transition: transform 0.2s; }
+        #ai-expert-btn:hover { transform: scale(1.1); }
+        #ai-expert-modal .modal-content { max-width: 800px; }
+        .api-key-section { background-color: var(--light-bg); padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .api-key-section input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; }
+        .feature-locked { opacity: 0.5; pointer-events: none; }
+        #ai-response, #quiz-container { margin-top: 15px; background-color: #fdfdfd; border: 1px solid var(--border-color); padding: 15px; border-radius: 5px; min-height: 50px; white-space: pre-wrap; }
+        .generate-quiz-btn { background-color: var(--info-color); }
+        .quiz-question { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .quiz-question p { margin-top: 0; margin-bottom: 10px; font-weight: bold; }
+        .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+        .quiz-options label { display: block; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; }
+        .quiz-options label:hover { background-color: #f0f8ff; }
+        .quiz-options input { margin-right: 10px; }
+        .quiz-feedback { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .quiz-feedback.correct { background-color: #d4edda; color: #155724; }
+        .quiz-feedback.incorrect { background-color: #f8d7da; color: #721c24; }
+        #quiz-navigation { margin-top: 15px; text-align: right; }
+        #quiz-results { padding: 15px; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <h1>MUDAH BELAJAR SQL DAN DATA ANALITIK</h1>
+        <h1>Analisis Data & SQL Runner</h1>
         <div class="content-wrapper">
             <div class="left-panel">
                 <div class="box" id="sample-data-box">
@@ -151,6 +170,8 @@
         </div>
     </div>
     
+    <button id="ai-expert-btn">?</button>
+
     <div id="help-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-button">&times;</button>
@@ -160,84 +181,50 @@
             <div class="data-cleaning-section">
                 <h3>Analisis dan Pembersihan Data</h3>
                 <p>Ini adalah fungsi dan sintaks yang paling penting untuk memperbaiki data yang tidak konsisten seperti pada tabel <code>data_karyawan</code>.</p>
-                
-                <h4>Mencari Tahu Masalah Data</h4>
-                <p><strong>DISTINCT</strong>: Menampilkan nilai unik dari sebuah kolom. Sangat berguna untuk melihat variasi data yang ada.</p>
                 <pre><code>-- Melihat semua variasi penulisan 'kota'
 SELECT DISTINCT kota FROM data_karyawan;</code></pre>
-                
-                <p><strong>IS NULL</strong>: Memfilter baris di mana sebuah kolom tidak memiliki nilai (kosong).</p>
-                <pre><code>-- Menemukan karyawan yang gajinya belum diisi
-SELECT * FROM data_karyawan WHERE gaji IS NULL OR gaji = '';</code></pre>
+            </div>
+        </div>
+    </div>
 
-                <p><strong>LIKE</strong>: Mencari data berdasarkan pola teks. Karakter <code>%</code> mewakili nol atau lebih karakter apa pun.</p>
-                <pre><code>-- Mencari nama yang mengandung spasi di awal atau akhir
-SELECT nama FROM data_karyawan WHERE nama LIKE ' %' OR nama LIKE '% ';</code></pre>
-
-                <h4>Memperbaiki Masalah Data</h4>
-                <p><strong>TRIM()</strong>: Menghapus spasi di awal dan akhir teks.</p>
-                <pre><code>-- Membersihkan spasi dari kolom nama
-SELECT nama, TRIM(nama) AS nama_bersih FROM data_karyawan;</code></pre>
-                
-                <p><strong>LOWER() / UPPER()</strong>: Mengubah teks menjadi huruf kecil atau besar untuk menyeragamkan format.</p>
-                <pre><code>-- Menyeragamkan data kota menjadi huruf kecil
-SELECT kota, LOWER(TRIM(kota)) AS kota_standar FROM data_karyawan;</code></pre>
-                
-                <p><strong>COALESCE()</strong>: Mengganti nilai NULL atau kosong dengan nilai default yang Anda tentukan.</p>
-                <pre><code>-- Mengganti gaji yang kosong dengan 0
-SELECT nama, COALESCE(gaji, 0) AS gaji_final FROM data_karyawan;</code></pre>
-                
-                <p><strong>CASE Statement</strong>: Menerapkan logika kondisional (if-then-else) untuk membuat kolom baru atau mengkategorikan data.</p>
-                <pre><code>-- Mengkategorikan gaji karyawan
-SELECT nama, gaji,
-CASE
-    WHEN gaji > 6000000 THEN 'Gaji Tinggi'
-    WHEN gaji IS NULL THEN 'Data Hilang'
-    ELSE 'Gaji Standar'
-END AS level_gaji
-FROM data_karyawan;</code></pre>
+    <div id="ai-expert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <h2>Tanya Ahli & Kuis SQL Interaktif</h2>
+            
+            <div class="api-key-section">
+                <h3>Kunci API Gemini</h3>
+                <p>Untuk menggunakan fitur AI, Anda memerlukan kunci API Gemini. Dapatkan secara gratis dari Google AI Studio.</p>
+                <ol>
+                    <li>Buka <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</li>
+                    <li>Klik "Create API key in new project".</li>
+                    <li>Salin (copy) kunci API yang muncul.</li>
+                    <li>Tempel (paste) di bawah ini dan simpan.</li>
+                </ol>
+                <input type="password" id="gemini-api-key" placeholder="Masukkan kunci API Gemini Anda di sini...">
+                <div class="action-buttons">
+                    <button id="save-api-key-btn" style="background-color: var(--primary-color);">Simpan Kunci API</button>
+                </div>
             </div>
 
-            <h3>Agregasi dan Pengelompokan</h3>
-            <p>Fungsi yang melakukan perhitungan pada sekelompok baris.</p>
-            <p><strong>COUNT()</strong>: Menghitung jumlah baris.</p>
-            <pre><code>-- Menghitung total karyawan
-SELECT COUNT(*) FROM data_karyawan;
--- Menghitung karyawan yang emailnya terisi
-SELECT COUNT(email) FROM data_karyawan;</code></pre>
-            <p><strong>SUM()</strong>: Menjumlahkan nilai numerik.</p>
-            <pre><code>-- Menghitung total gaji yang dikeluarkan (mengabaikan NULL)
-SELECT SUM(gaji) FROM data_karyawan;</code></pre>
-            <p><strong>AVG()</strong>: Menghitung nilai rata-rata.</p>
-            <pre><code>-- Menghitung rata-rata gaji
-SELECT AVG(gaji) FROM data_karyawan;</code></pre>
-            <p><strong>MIN() / MAX()</strong>: Menemukan nilai terkecil atau terbesar.</p>
-            <pre><code>-- Melihat gaji terendah dan tertinggi
-SELECT MIN(gaji), MAX(gaji) FROM data_karyawan;</code></pre>
-            <p><strong>GROUP BY</strong>: Mengelompokkan baris berdasarkan nilai kolom, biasanya digunakan dengan fungsi agregat.</p>
-            <pre><code>-- Menghitung jumlah karyawan per kota (setelah dibersihkan)
-SELECT LOWER(TRIM(kota)) AS kota_bersih, COUNT(id)
-FROM data_karyawan
-GROUP BY kota_bersih;</code></pre>
-            <p><strong>HAVING</strong>: Memfilter hasil setelah data dikelompokkan oleh <code>GROUP BY</code>.</p>
-            <pre><code>-- Menampilkan kota yang memiliki lebih dari 1 karyawan
-SELECT LOWER(TRIM(kota)) AS kota_bersih, COUNT(id) AS jumlah
-FROM data_karyawan
-GROUP BY kota_bersih
-HAVING jumlah > 1;</code></pre>
+            <div id="ai-features-container" class="feature-locked">
+                <h3>Tanya Ahli Analisis Data</h3>
+                <p>Ajukan pertanyaan tentang data di tabel <strong><code id="ai-context-table-name"></code></strong> atau tentang SQL secara umum.</p>
+                <textarea id="ai-question" placeholder="Contoh: Berapa rata-rata gaji untuk karyawan di Jakarta? atau Jelaskan cara kerja GROUP BY." style="height: 80px;"></textarea>
+                <div class="action-buttons">
+                    <button id="ask-ai-btn" style="background-color: var(--success-color);">Tanyakan</button>
+                </div>
+                <div id="ai-response">Jawaban dari ahli akan muncul di sini...</div>
 
-            <h3>Klausa Umum Lainnya</h3>
-            <p><strong>SELECT, FROM, WHERE</strong>: Fondasi dari setiap kueri untuk mengambil data.</p>
-            <pre><code>-- Mengambil nama dan email karyawan dari Jakarta (setelah dibersihkan)
-SELECT nama, email
-FROM data_karyawan
-WHERE LOWER(TRIM(kota)) = 'jakarta';</code></pre>
-            <p><strong>ORDER BY</strong>: Mengurutkan hasil. <code>ASC</code> untuk menaik (default), <code>DESC</code> untuk menurun.</p>
-            <pre><code>-- Mengurutkan karyawan berdasarkan gaji dari tertinggi ke terendah
-SELECT * FROM data_karyawan ORDER BY gaji DESC;</code></pre>
-            <p><strong>LIMIT</strong>: Membatasi jumlah baris yang ditampilkan.</p>
-            <pre><code>-- Menampilkan 3 karyawan dengan gaji tertinggi
-SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
+                <h3>Kuis SQL Interaktif</h3>
+                <p>Uji pengetahuan SQL Anda dengan kuis yang dibuat oleh AI berdasarkan tabel saat ini.</p>
+                <div class="action-buttons">
+                    <button class="generate-quiz-btn" data-count="10">Buat 10 Soal Kuis</button>
+                    <button class="generate-quiz-btn" data-count="15">Buat 15 Soal Kuis</button>
+                    <button class="generate-quiz-btn" data-count="20">Buat 20 Soal Kuis</button>
+                </div>
+                <div id="quiz-container">Kuis akan muncul di sini...</div>
+            </div>
         </div>
     </div>
 
@@ -247,6 +234,10 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
         let cleanedTableName = null;
         let currentTableName = '';
         let tableHeaders = [];
+        let geminiApiKey = '';
+        let currentQuiz = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
 
         const ui = {
             runButton: document.getElementById('run-button'),
@@ -266,7 +257,17 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
             uploadStatus: document.getElementById('upload-status'),
             samplePreviewTable: document.getElementById('sample-data-preview-table'),
             sampleDataTitle: document.getElementById('sample-data-title'),
-            clearCsvBtn: document.getElementById('clear-csv-btn')
+            clearCsvBtn: document.getElementById('clear-csv-btn'),
+            aiExpertBtn: document.getElementById('ai-expert-btn'),
+            aiExpertModal: document.getElementById('ai-expert-modal'),
+            apiKeyInput: document.getElementById('gemini-api-key'),
+            saveApiKeyBtn: document.getElementById('save-api-key-btn'),
+            aiFeaturesContainer: document.getElementById('ai-features-container'),
+            aiContextTableName: document.getElementById('ai-context-table-name'),
+            aiQuestion: document.getElementById('ai-question'),
+            askAiBtn: document.getElementById('ask-ai-btn'),
+            aiResponse: document.getElementById('ai-response'),
+            quizContainer: document.getElementById('quiz-container')
         };
 
         const sampleData = {
@@ -302,13 +303,15 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
                 db = new SQL.Database();
                 populateSampleDataPreview();
                 setupEventListeners();
-                loadDataIntoDB(sampleData.tableName, sampleData.headers, sampleData.rows, true); // Pass true for pre-parsed sample data
+                loadDataIntoDB(sampleData.tableName, sampleData.headers, sampleData.rows, true);
+                loadApiKey();
             } catch (e) {
                 showError("Tidak dapat memuat database.");
             }
         }
 
         function setupEventListeners() {
+            // Existing Listeners
             ui.uploadInput.addEventListener('change', handleFileUpload);
             ui.runButton.addEventListener('click', runQuery);
             ui.analyzeBtn.addEventListener('click', analyzeData);
@@ -319,15 +322,34 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
                 ui.queryTextarea.value = event.target.value;
                 runQuery();
             });
+            
+            // Modal Listeners
             ui.helpBtn.addEventListener('click', () => { ui.helpModal.style.display = 'flex'; });
             ui.helpModal.querySelector('.close-button').addEventListener('click', () => { ui.helpModal.style.display = 'none'; });
-            ui.helpModal.addEventListener('click', (e) => {
-                if (e.target === ui.helpModal) {
-                    ui.helpModal.style.display = 'none';
+            ui.aiExpertBtn.addEventListener('click', () => {
+                ui.aiContextTableName.textContent = currentTableName;
+                ui.aiExpertModal.style.display = 'flex';
+            });
+            const closeAiModal = () => {
+                if (window.confirm("Apakah Anda yakin ingin keluar? Semua progres kuis atau chat akan hilang.")) {
+                    ui.aiExpertModal.style.display = 'none';
+                }
+            };
+            ui.aiExpertModal.querySelector('.close-button').addEventListener('click', closeAiModal);
+            ui.aiExpertModal.addEventListener('click', (e) => {
+                if (e.target === ui.aiExpertModal) {
+                    closeAiModal();
                 }
             });
+            
+            // AI Feature Listeners
+            ui.saveApiKeyBtn.addEventListener('click', saveApiKey);
+            ui.askAiBtn.addEventListener('click', askAiExpert);
+            document.querySelectorAll('.generate-quiz-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => generateQuiz(e.target.dataset.count));
+            });
         }
-
+        
         function populateSampleDataPreview() {
             const table = ui.samplePreviewTable;
             let html = '<thead><tr>';
@@ -425,8 +447,6 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
             runQuery();
             updateDataSourceUI();
             ui.analysisReportDiv.innerHTML = '';
-            // Do not hide the log on table switch
-            // ui.cleaningLogDiv.style.display = 'none';
         }
 
         function updateDataSourceUI() {
@@ -507,7 +527,7 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
             if (!currentTableName) return;
             ui.analysisReportDiv.innerHTML = '<h3>Laporan Analisis Kualitas Data</h3>';
             let issuesFound = 0;
-            const headersForDupeCheck = tableHeaders.filter(h => h.toLowerCase() !== 'id');
+            const headersForDupeCheck = tableHeaders.filter(h => h.toLowerCase() !== 'id').map(h => `"${h}"`);
             const runAnalysis = (title, query, description) => {
                 try {
                     const res = db.exec(query);
@@ -521,7 +541,9 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
             };
             runAnalysis("Nilai Kosong (NULL)", `SELECT * FROM ${currentTableName} WHERE ${tableHeaders.map(h => `"${h}" IS NULL OR "${h}" = ''`).join(' OR ')}`, "Baris berikut memiliki kolom kosong.");
             runAnalysis("Spasi Berlebih", `SELECT * FROM ${currentTableName} WHERE ${tableHeaders.map(h => `"${h}" != TRIM("${h}")`).join(' OR ')}`, "Baris berikut memiliki spasi ekstra.");
-            runAnalysis("Data Duplikat", `SELECT ${headersForDupeCheck.map(h => `"${h}"`).join(', ')}, COUNT(*) as jumlah FROM ${currentTableName} GROUP BY ${headersForDupeCheck.map(h => `"${h}"`).join(', ')} HAVING COUNT(*) > 1`, "Baris berikut ini duplikat (mengabaikan ID).");
+            if (headersForDupeCheck.length > 0) {
+                runAnalysis("Data Duplikat", `SELECT ${headersForDupeCheck.join(', ')}, COUNT(*) as jumlah FROM ${currentTableName} GROUP BY ${headersForDupeCheck.join(', ')} HAVING COUNT(*) > 1`, "Baris berikut ini duplikat (mengabaikan ID).");
+            }
             if (issuesFound === 0) ui.analysisReportDiv.innerHTML += '<p style="color: green; font-weight: bold;">Tidak ada masalah kualitas data umum yang terdeteksi.</p>';
         }
         
@@ -545,7 +567,7 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
             ui.cleaningLogDiv.innerHTML = '';
             const log = (message) => { ui.cleaningLogDiv.innerHTML += `> ${message}\n`; ui.cleaningLogDiv.scrollTop = ui.cleaningLogDiv.scrollHeight; };
             const sleep = ms => new Promise(res => setTimeout(res, ms));
-            const headersForDupeCheck = tableHeaders.filter(h => h.toLowerCase() !== 'id');
+            const headersForDupeCheck = tableHeaders.filter(h => h.toLowerCase() !== 'id').map(h => `"${h}"`);
 
             try {
                 log("Memulai proses pembersihan...");
@@ -570,7 +592,9 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
 
                 log("Menghapus data duplikat...");
                 const preCleanCount = db.exec(`SELECT COUNT(*) FROM ${cleanedTableName}`)[0].values[0][0];
-                db.run(`DELETE FROM ${cleanedTableName} WHERE rowid NOT IN (SELECT MIN(rowid) FROM ${cleanedTableName} GROUP BY ${headersForDupeCheck.map(h => `"${h}"`).join(', ')})`);
+                if (headersForDupeCheck.length > 0) {
+                    db.run(`DELETE FROM ${cleanedTableName} WHERE rowid NOT IN (SELECT MIN(rowid) FROM ${cleanedTableName} GROUP BY ${headersForDupeCheck.join(', ')})`);
+                }
                 const postCleanCount = db.exec(`SELECT COUNT(*) FROM ${cleanedTableName}`)[0].values[0][0];
                 const deletedRows = preCleanCount - postCleanCount;
                 log(`[OK] ${deletedRows} baris duplikat dihapus.`);
@@ -640,6 +664,212 @@ SELECT * FROM data_karyawan ORDER BY gaji DESC LIMIT 3;</code></pre>
         function showError(message) {
             ui.errorDiv.textContent = message;
             ui.errorDiv.style.display = 'block';
+        }
+
+        // --- AI Expert Functions ---
+
+        function loadApiKey() {
+            const key = localStorage.getItem('geminiApiKey');
+            if (key) {
+                geminiApiKey = key;
+                ui.apiKeyInput.value = key;
+                ui.aiFeaturesContainer.classList.remove('feature-locked');
+            }
+        }
+
+        function saveApiKey() {
+            const key = ui.apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('geminiApiKey', key);
+                geminiApiKey = key;
+                ui.aiFeaturesContainer.classList.remove('feature-locked');
+                alert('Kunci API berhasil disimpan!');
+            } else {
+                alert('Kunci API tidak boleh kosong.');
+            }
+        }
+
+        async function callGeminiAPI(prompt, isJson = false) {
+            if (!geminiApiKey) {
+                alert('Silakan masukkan kunci API Gemini Anda terlebih dahulu.');
+                return null;
+            }
+
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            
+            let payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            if (isJson) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "quiz": {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        "question": { "type": "STRING" },
+                                        "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                        "correctAnswer": { "type": "STRING" },
+                                        "explanation": { "type": "STRING" }
+                                    },
+                                    required: ["question", "options", "correctAnswer", "explanation"]
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorBody.error.message}`);
+                }
+
+                const result = await response.json();
+                return result.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return `Error: ${error.message}`;
+            }
+        }
+
+        async function askAiExpert() {
+            const question = ui.aiQuestion.value;
+            if (!question.trim()) {
+                alert('Pertanyaan tidak boleh kosong.');
+                return;
+            }
+
+            const prompt = `Anda adalah seorang ahli analisis data dan SQL. Jawab pertanyaan berikut berdasarkan konteks tabel bernama '${currentTableName}' dengan kolom: ${tableHeaders.join(', ')}. Pertanyaan: "${question}"`;
+            
+            ui.aiResponse.textContent = 'Sedang berpikir...';
+            ui.askAiBtn.disabled = true;
+
+            const responseText = await callGeminiAPI(prompt);
+            ui.aiResponse.textContent = responseText;
+            ui.askAiBtn.disabled = false;
+        }
+
+        async function generateQuiz(count) {
+            const prompt = `Buat kuis SQL interaktif sebanyak ${count} soal. Soal harus relevan dengan tabel bernama '${currentTableName}' yang memiliki kolom: ${tableHeaders.join(', ')}. Berikan 4 pilihan jawaban untuk setiap soal.`;
+            
+            ui.quizContainer.innerHTML = 'Membuat kuis...';
+            document.querySelectorAll('.generate-quiz-btn').forEach(b => b.disabled = true);
+
+            const jsonResponse = await callGeminiAPI(prompt, true);
+            
+            try {
+                const quizData = JSON.parse(jsonResponse);
+                currentQuiz = quizData.quiz;
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                displayCurrentQuestion();
+            } catch (e) {
+                ui.quizContainer.innerHTML = `Gagal membuat kuis. Coba lagi.\nError: ${e.message}\nResponse: ${jsonResponse}`;
+            } finally {
+                document.querySelectorAll('.generate-quiz-btn').forEach(b => b.disabled = false);
+            }
+        }
+
+        function displayCurrentQuestion() {
+            const q = currentQuiz[currentQuestionIndex];
+            if (!q) return;
+
+            let quizHtml = `
+                <div class="quiz-question" id="q-${currentQuestionIndex}">
+                    <p><strong>Soal ${currentQuestionIndex + 1} dari ${currentQuiz.length}:</strong> ${q.question}</p>
+                    <div class="quiz-options">
+                        ${q.options.map((opt, i) => `
+                            <label>
+                                <input type="radio" name="q${currentQuestionIndex}" value="${opt}">
+                                ${opt}
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div id="quiz-navigation">
+                    <button id="check-answer-btn" style="background-color: var(--success-color);">Periksa Jawaban</button>
+                </div>
+            `;
+            ui.quizContainer.innerHTML = quizHtml;
+            document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
+        }
+
+        function checkAnswer() {
+            const selected = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            const feedbackEl = document.querySelector(`#q-${currentQuestionIndex} .quiz-feedback`);
+            
+            if (!selected) {
+                alert('Silakan pilih jawaban terlebih dahulu.');
+                return;
+            }
+
+            const isCorrect = selected.value === currentQuiz[currentQuestionIndex].correctAnswer;
+            userAnswers.push({
+                question: currentQuiz[currentQuestionIndex].question,
+                selected: selected.value,
+                correct: currentQuiz[currentQuestionIndex].correctAnswer,
+                isCorrect: isCorrect,
+                explanation: currentQuiz[currentQuestionIndex].explanation
+            });
+
+            if (isCorrect) {
+                feedbackEl.textContent = 'Benar!';
+                feedbackEl.className = 'quiz-feedback correct';
+            } else {
+                feedbackEl.textContent = `Salah. Jawaban yang benar: ${currentQuiz[currentQuestionIndex].correctAnswer}. Penjelasan: ${currentQuiz[currentQuestionIndex].explanation}`;
+                feedbackEl.className = 'quiz-feedback incorrect';
+            }
+
+            document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`).forEach(input => input.disabled = true);
+            
+            const navButton = document.getElementById('check-answer-btn');
+            navButton.textContent = currentQuestionIndex === currentQuiz.length - 1 ? 'Selesaikan Kuis' : 'Selanjutnya';
+            navButton.style.backgroundColor = 'var(--primary-color)';
+            navButton.onclick = goToNextQuestion;
+        }
+        
+        function goToNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuiz.length) {
+                displayCurrentQuestion();
+            } else {
+                displayQuizResults();
+            }
+        }
+
+        function displayQuizResults() {
+            const score = userAnswers.filter(a => a.isCorrect).length;
+            let resultsHtml = `
+                <h3>Hasil Kuis</h3>
+                <p><strong>Skor Anda: ${score} dari ${currentQuiz.length}</strong></p>
+            `;
+            userAnswers.forEach((answer, index) => {
+                resultsHtml += `
+                    <div class="quiz-question">
+                        <p><strong>${index + 1}. ${answer.question}</strong></p>
+                        <p>Jawaban Anda: ${answer.selected}</p>
+                        <div class="quiz-feedback ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                            ${answer.isCorrect ? 'Benar!' : `Salah. Jawaban yang benar: ${answer.correct}.`}
+                            <br><em>${answer.explanation}</em>
+                        </div>
+                    </div>
+                `;
+            });
+            ui.quizContainer.innerHTML = resultsHtml;
         }
 
         main();
