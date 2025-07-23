@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUDAH BELAJAR SQL UNTUK DATA ANALITIK</title>
+    <title>MUDAH BELAJAR SQL DAN DATA ANALITIK</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -90,7 +90,7 @@
 
                 <div class="box" id="public-dataset-box">
                     <h3>Contoh Public Dataset</h3>
-                    <p>Unduh salah satu dataset di bawah ini, lalu unggah menggunakan tombol di atas.</p>
+                    <p>Klik kanan > "Simpan tautan sebagai..." untuk mengunduh, lalu unggah menggunakan tombol di atas.</p>
                     <div class="action-buttons">
                         <a href="https://calmcode.io/static/data/titanic.csv" download="titanic.csv" class="dataset-link">Titanic</a>
                         <a href="https://calmcode.io/static/data/bigmac.csv" download="bigmac.csv" class="dataset-link">Big Mac Index</a>
@@ -250,7 +250,8 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             cleaningLogDiv: document.getElementById('cleaning-log'),
             sampleQueriesSelect: document.getElementById('sample-queries'),
             activeTableNameSpan: document.getElementById('active-table-name'),
-            dataSourceButtons: document.getElementById('data-source-buttons')
+            dataSourceButtons: document.getElementById('data-source-buttons'),
+            uploadBox: document.querySelector('.upload-section')
         };
 
         const sampleData = {
@@ -290,32 +291,97 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             });
             ui.helpBtn.addEventListener('click', () => { ui.helpModal.style.display = 'flex'; });
             ui.helpModal.querySelector('.close-button').addEventListener('click', () => { ui.helpModal.style.display = 'none'; });
+            ui.helpModal.addEventListener('click', (e) => {
+                if (e.target === ui.helpModal) {
+                    ui.helpModal.style.display = 'none';
+                }
+            });
         }
         
-        function loadDataIntoDB(tableName, headers, rows) {
+        /**
+         * A more robust CSV parser that handles quoted fields.
+         * @param {string} line - A single line from a CSV file.
+         * @returns {string[]} An array of fields.
+         */
+        function parseCsvLine(line) {
+            const result = [];
+            let currentField = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && line[i+1] === '"') {
+                        // Handle escaped quote
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(currentField);
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            result.push(currentField);
+            return result;
+        }
+
+        function loadDataIntoDB(tableName, headers, dataRows) {
             try {
+                ui.uploadBox.querySelector('p').innerHTML = `Memproses <strong>${tableName}</strong>...`;
                 db.run(`DROP TABLE IF EXISTS ${tableName};`);
                 db.run(`DROP TABLE IF EXISTS ${tableName}_bersih;`);
                 
                 const createTableSql = `CREATE TABLE ${tableName} (${headers.map(h => `"${h}" TEXT`).join(', ')});`;
                 db.run(createTableSql);
-
-                const stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${headers.map(() => '?').join(', ')})`);
-                rows.forEach(row => { if (row.length === headers.length) stmt.run(row); });
-                stmt.free();
                 
                 originalTableName = tableName;
                 cleanedTableName = null;
                 tableHeaders = headers;
                 
-                switchActiveTable(originalTableName);
-                updateDataSourceUI();
+                processRowsInChunks(tableName, headers, dataRows, 0);
 
             } catch(err) {
                 showError(`Gagal memuat data: ${err.message}`);
+                ui.uploadBox.querySelector('p').textContent = "Gagal memuat. Silakan coba lagi.";
             }
         }
         
+        function processRowsInChunks(tableName, headers, rows, startIndex) {
+            const chunkSize = 100; // Process 100 rows per chunk
+            const totalRows = rows.length;
+            let endIndex = startIndex + chunkSize;
+            if (endIndex > totalRows) {
+                endIndex = totalRows;
+            }
+
+            const stmt = db.prepare(`INSERT INTO ${tableName} VALUES (${headers.map(() => '?').join(', ')})`);
+            for (let i = startIndex; i < endIndex; i++) {
+                // Use the robust parser here
+                const parsedRow = parseCsvLine(rows[i]);
+                if (parsedRow.length === headers.length) {
+                    stmt.run(parsedRow);
+                } else {
+                    console.warn(`Skipping malformed row ${i+1}: Expected ${headers.length} columns, but found ${parsedRow.length}. Row content: ${rows[i]}`);
+                }
+            }
+            stmt.free();
+            
+            ui.uploadBox.querySelector('p').innerHTML = `Memproses baris ${endIndex} dari ${totalRows}...`;
+
+            if (endIndex < totalRows) {
+                // Schedule the next chunk to keep the UI responsive
+                setTimeout(() => processRowsInChunks(tableName, headers, rows, endIndex), 0);
+            } else {
+                // Finished processing
+                ui.uploadBox.querySelector('p').textContent = "Atau gunakan data yang tersedia:";
+                switchActiveTable(originalTableName);
+                updateDataSourceUI();
+            }
+        }
+
         function switchActiveTable(tableName) {
             currentTableName = tableName;
             ui.activeTableNameSpan.textContent = `'${currentTableName}'`;
@@ -376,10 +442,10 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
             reader.onload = function(e) {
                 const csvText = e.target.result;
                 const rows = csvText.trim().split('\n').map(r => r.trim());
-                const headers = rows.shift().split(',').map(h => h.trim().replace(/"/g, '').replace(/[^a-zA-Z0-9_]/g, '_'));
-                const data = rows.map(r => r.split(',').map(c => c.trim().replace(/"/g, '')));
+                // Use the robust parser for the header as well
+                const headers = parseCsvLine(rows.shift()).map(h => h.trim().replace(/"/g, '').replace(/[^a-zA-Z0-9_]/g, '_'));
                 const tableName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_]/g, '_');
-                loadDataIntoDB(tableName, headers, data);
+                loadDataIntoDB(tableName, headers, rows); // Pass raw rows
             };
             reader.readAsText(file);
         }
