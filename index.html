@@ -37,7 +37,9 @@
         .upload-button { background-color: var(--primary-color); color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; display: inline-block; transition: background-color 0.2s; }
         textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Courier New', Courier, monospace; font-size: 14px; box-sizing: border-box; }
         .action-buttons { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
-        button { padding: 10px 15px; border: none; color: white; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background-color 0.2s; }
+        button, .dataset-link { padding: 10px 15px; border: none; color: white; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background-color 0.2s; text-decoration: none; }
+        .dataset-link { background-color: #5a6268; padding: 8px 12px; font-size: 13px; }
+        .dataset-link:hover { background-color: #4a5258; }
         button.data-source-btn { background-color: var(--secondary-color); }
         button.data-source-btn.active { background-color: var(--primary-color); font-weight: bold; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -83,6 +85,19 @@
                     <div id="data-source-box" style="margin-top: 15px;">
                         <p>Atau gunakan data yang tersedia:</p>
                         <div id="data-source-buttons" class="action-buttons"></div>
+                    </div>
+                </div>
+
+                <div class="box" id="public-dataset-box">
+                    <h3>Contoh Public Dataset</h3>
+                    <p>Unduh salah satu dataset di bawah ini, lalu unggah menggunakan tombol di atas.</p>
+                    <div class="action-buttons">
+                        <a href="https://calmcode.io/static/data/titanic.csv" download="titanic.csv" class="dataset-link">Titanic</a>
+                        <a href="https://calmcode.io/static/data/bigmac.csv" download="bigmac.csv" class="dataset-link">Big Mac Index</a>
+                        <a href="https://calmcode.io/static/data/smoking.csv" download="smoking.csv" class="dataset-link">Smoking</a>
+                        <a href="https://calmcode.io/static/data/fish.csv" download="fish.csv" class="dataset-link">Fish Market</a>
+                        <a href="https://calmcode.io/static/data/chickweight.csv" download="chickweight.csv" class="dataset-link">Chick Weight</a>
+                        <a href="https://calmcode.io/static/data/stigler.csv" download="stigler.csv" class="dataset-link">Stigler Diet</a>
                     </div>
                 </div>
 
@@ -339,11 +354,11 @@ SELECT * FROM karyawan_kotor ORDER BY gaji DESC LIMIT 3;</code></pre>
                 { name: `5. Tampilkan Data Email Kosong`, query: `SELECT * FROM ${tableName} WHERE email IS NULL OR email = '';` },
                 { name: `6. Urutkan Karyawan by Nama (A-Z)`, query: `SELECT * FROM ${tableName} ORDER BY nama ASC;` },
                 { name: `7. Rata-rata Gaji per Kota`, query: `SELECT LOWER(TRIM(kota)) as kota, CAST(AVG(gaji) AS INTEGER) as rata_rata_gaji FROM ${tableName} GROUP BY LOWER(TRIM(kota));` },
-                { name: `8. Tampilkan 3 Gaji Tertinggi`, query: `SELECT * FROM ${tableName} ORDER BY gaji DESC LIMIT 3;`},
-                { name: `9. Lihat Variasi Penulisan Kota`, query: `SELECT DISTINCT kota FROM ${tableName};`},
-                { name: `10. Ganti Gaji Kosong dengan 0`, query: `SELECT nama, email, kota, COALESCE(gaji, 0) AS gaji_diperbaiki FROM ${tableName};`},
-                { name: `11. Kategorikan Level Gaji (CASE)`, query: `SELECT nama, gaji,\nCASE\n    WHEN gaji > 7000000 THEN 'Tinggi'\n    WHEN gaji > 5000000 THEN 'Menengah'\n    ELSE 'Standar'\nEND AS level_gaji\nFROM ${tableName};`},
-                { name: `12. Hitung Panjang Nama Karyawan`, query: `SELECT nama, LENGTH(nama) AS panjang_nama FROM ${tableName};`}
+                { name: `8. Tampilkan 3 Gaji Tertinggi`, query: `SELECT * FROM ${tableName} ORDER BY gaji DESC LIMIT 3;` },
+                { name: `9. Lihat Variasi Penulisan Kota`, query: `SELECT DISTINCT kota FROM ${tableName};` },
+                { name: `10. Ganti Gaji Kosong dengan 0`, query: `SELECT nama, email, kota, COALESCE(gaji, 0) AS gaji_diperbaiki FROM ${tableName};` },
+                { name: `11. Kategorikan Level Gaji (CASE)`, query: `SELECT nama, gaji,\nCASE\n    WHEN gaji > 7000000 THEN 'Tinggi'\n    WHEN gaji > 5000000 THEN 'Menengah'\n    ELSE 'Standar'\nEND AS level_gaji\nFROM ${tableName};` },
+                { name: `12. Hitung Panjang Nama Karyawan`, query: `SELECT nama, LENGTH(nama) AS panjang_nama FROM ${tableName};` }
             ];
             ui.sampleQueriesSelect.innerHTML = '';
             queries.forEach(item => {
