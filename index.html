@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Belajar SQL dan Data Analisis</title>
+    <title>Belajar SQL dan Data Analisis. Oleh : ISPARMO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -601,7 +601,13 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
             cleanedTableName = originalTableName + '_clean';
             ui.cleaningLogDiv.style.display = 'block';
             ui.cleaningLogDiv.innerHTML = '';
-            const log = (message) => { ui.cleaningLogDiv.innerHTML += `> ${message}\n`; ui.cleaningLogDiv.scrollTop = ui.cleaningLogDiv.scrollHeight; };
+            const log = (message, query = null) => {
+                ui.cleaningLogDiv.innerHTML += `> ${message}\n`;
+                if (query) {
+                    ui.cleaningLogDiv.innerHTML += `<pre style="color: #fff; background-color: #333; padding: 5px; border-radius: 3px; margin-left: 10px;">${query}</pre>`;
+                }
+                ui.cleaningLogDiv.scrollTop = ui.cleaningLogDiv.scrollHeight; 
+            };
             const sleep = ms => new Promise(res => setTimeout(res, ms));
             const headersForDupeCheck = tableHeaders.filter(h => h.toLowerCase() !== 'id').map(h => `"${h}"`);
 
@@ -609,27 +615,35 @@ SELECT DISTINCT kota FROM data_karyawan;</code></pre>
                 log("Memulai proses pembersihan...");
                 await sleep(300);
 
-                log(`Menduplikasi tabel '${originalTableName}' ke '${cleanedTableName}'...`);
-                db.run(`DROP TABLE IF EXISTS ${cleanedTableName}`);
-                db.run(`CREATE TABLE ${cleanedTableName} AS SELECT * FROM ${originalTableName}`);
+                let query = `CREATE TABLE ${cleanedTableName} AS SELECT * FROM ${originalTableName}`;
+                log(`Menduplikasi tabel...`, query);
+                db.run(query);
                 await sleep(500);
 
                 log("Menghapus spasi & menyeragamkan format...");
-                tableHeaders.forEach(h => db.run(`UPDATE ${cleanedTableName} SET "${h}" = LOWER(TRIM("${h}"))`));
+                for (const h of tableHeaders) {
+                    query = `UPDATE ${cleanedTableName} SET "${h}" = LOWER(TRIM("${h}"))`;
+                    db.run(query);
+                }
+                log("   (Looping UPDATE... Selesai)");
                 await sleep(500);
 
                 log("Mengisi nilai kosong (NULL)...");
-                tableHeaders.forEach(h => {
+                for (const h of tableHeaders) {
                     const lc = h.toLowerCase();
                     const fillVal = (lc.includes('gaji') || lc.includes('id')) ? 0 : 'N/A';
-                    db.run(`UPDATE ${cleanedTableName} SET "${h}" = '${fillVal}' WHERE "${h}" IS NULL OR "${h}" = ''`);
-                });
+                    query = `UPDATE ${cleanedTableName} SET "${h}" = '${fillVal}' WHERE "${h}" IS NULL OR "${h}" = ''`;
+                    db.run(query);
+                }
+                log("   (Looping UPDATE... Selesai)");
                 await sleep(500);
 
                 log("Menghapus data duplikat...");
                 const preCleanCount = db.exec(`SELECT COUNT(*) FROM ${cleanedTableName}`)[0].values[0][0];
                 if (headersForDupeCheck.length > 0) {
-                    db.run(`DELETE FROM ${cleanedTableName} WHERE rowid NOT IN (SELECT MIN(rowid) FROM ${cleanedTableName} GROUP BY ${headersForDupeCheck.join(', ')})`);
+                    query = `DELETE FROM ${cleanedTableName} WHERE rowid NOT IN (SELECT MIN(rowid) FROM ${cleanedTableName} GROUP BY ${headersForDupeCheck.join(', ')})`;
+                    log("Menjalankan kueri hapus duplikat...", query);
+                    db.run(query);
                 }
                 const postCleanCount = db.exec(`SELECT COUNT(*) FROM ${cleanedTableName}`)[0].values[0][0];
                 const deletedRows = preCleanCount - postCleanCount;
