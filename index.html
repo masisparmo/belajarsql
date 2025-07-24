@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Belaja SQL dan Data Analisis. Oleh : ISPARMO</title>
+    <title>Belajar SQL dan Data Analisis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <style>
         :root {
@@ -92,12 +92,40 @@
         #quiz-navigation { margin-top: 15px; text-align: right; }
         #quiz-results { padding: 15px; }
         #quiz-results p strong { font-size: 1.5em; color: var(--primary-color); }
+
+        /* Mobile Friendliness */
+        @media (max-width: 800px) {
+            body {
+                padding: 10px;
+            }
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                min-width: 100%;
+                box-sizing: border-box;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            #ai-expert-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                bottom: 20px;
+                right: 20px;
+            }
+            .modal-content {
+                padding: 15px;
+                width: 95%;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <h1>BELAJAR SQL DAN ANALISA DATA</h1>
+        <h1>MUDAH BELAJAR SQL & DATA ANALISIS</h1>
         <div class="content-wrapper">
             <div class="left-panel">
                 <div class="box" id="sample-data-box">
@@ -139,7 +167,7 @@
                     <p>Jalankan alat pada tabel aktif: <code id="active-table-name"></code></p>
                     <div class="action-buttons">
                         <button id="analyze-data-btn">Analisis Data</button>
-                        <button id="clean-data-btn">Buat Versi Bersih</button>
+                        <button id="clean-data-btn">Data Cleaning</button>
                     </div>
                     <div id="analysis-report"></div>
                     <div id="cleaning-log" style="display:none;"></div>
